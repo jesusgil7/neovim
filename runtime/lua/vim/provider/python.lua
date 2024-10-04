@@ -78,7 +78,15 @@ end
 --- @return string? path to detected python, if any; nil if not found
 --- @return string? error message if python can't be detected by {module}; nil if success
 function M.detect_by_module(module)
-  local python_exe = vim.fn.expand(vim.g.python3_host_prog or '', true)
+ -- Check if Python3 provider is incorrectly disabled by vim.g.loaded_python3_provider
+if vim.g.loaded_python3_provider == 1 then
+  vim.api.nvim_echo({
+    {"The Python 3 provider is disabled due to vim.g.loaded_python3_provider being set to 1.", "WarningMsg"},
+    {"Do not set this variable to 1 unless you intend to disable the Python 3 provider.", "WarningMsg"}
+  }, true, {})
+  return nil, "Python 3 provider is disabled."
+end
+	local python_exe = vim.fn.expand(vim.g.python3_host_prog or '', true)
 
   if python_exe ~= '' then
     return vim.fn.exepath(vim.fn.expand(python_exe, true)), nil
@@ -93,7 +101,6 @@ function M.detect_by_module(module)
     -- Accumulate errors in case we don't find any suitable Python executable.
     table.insert(errors, error)
   end
-
   -- No suitable Python executable found.
   return nil, 'Could not load Python :\n' .. table.concat(errors, '\n')
 end
